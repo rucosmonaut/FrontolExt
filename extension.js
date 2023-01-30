@@ -14,28 +14,39 @@ function handleError(err) {
   throw err;
 }
 
-// ToDo add recursively getting files.
 /**
  * Adds two numbers together.
  * @param {string} folderURL URL forlder.
+ * @param {string} exclusionFilePath File that will not be added.
  * @return {Array<object>} Return Array of objects with file name and path.
  */
-function getFilesNamesFromeFolder(folderURL) {
+function getFilesNamesFromeFolder(folderURL, exclusionFilePath) {
   const files = [];
 
-  fs.readdirSync(folderURL).forEach((file) => {
-    if (path.extname(file).toLowerCase() === '.txt' ||
+  const getFilesRecursively = (folderURL) => {
+    const filesInDirectory = fs.readdirSync(folderURL);
+    for (const file of filesInDirectory) {
+      const absolute = path.join(folderURL, file);
+      if (fs.statSync(absolute).isDirectory()) {
+        getFilesRecursively(absolute);
+      } else {
+        if (exclusionFilePath === absolute) continue;
+        if (path.extname(file).toLowerCase() === '.txt' ||
         path.extname(file).toLowerCase() === '.js') {
-      const filePath = `${folderURL}\\${file}`;
+          const filePath = `${folderURL}\\${file}`;
 
-      const fileInfo = {
-        name: file,
-        path: filePath,
-      };
+          const fileInfo = {
+            name: file,
+            path: filePath,
+          };
 
-      files.push(fileInfo);
+          files.push(fileInfo);
+        }
+      }
     }
-  });
+  };
+
+  getFilesRecursively(folderURL);
 
   return files;
 }
@@ -162,18 +173,20 @@ async function activate(context) {
     }
 
     const rootFolderPath = foldersNames[0].uri.fsPath;
-    let files = getFilesNamesFromeFolder(rootFolderPath);
 
     // Find root Index.js file.
-    const indexFile = files.filter((file) => {
-      return (file.name === 'Index.js') &&
-        (file.path === `${rootFolderPath}\\Index.js`);
-    })[0];
+    const indexFile = {
+      name: 'Index.js',
+      path: `${rootFolderPath}\\Index.js`,
+    };
+
     const outputFolderPath = `${rootFolderPath}\\output`;
     const outputFilePath = `${rootFolderPath}\\output\\output.js`;
 
     checkOutputFolder(outputFolderPath);
     checkOutputFile(outputFilePath);
+
+    let files = getFilesNamesFromeFolder(rootFolderPath, outputFilePath);
 
     copyFileContent(outputFilePath, indexFile.path);
 
