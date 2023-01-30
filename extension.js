@@ -78,7 +78,6 @@ function copyFileContent(savPath, srcPath) {
   });
 }
 
-// ToDo add new line between modules.
 /**
  * @param {string} folderPath Path to folder.
  */
@@ -88,7 +87,6 @@ function checkOutputFolder(folderPath) {
   }
 }
 
-// ToDo add new line between modules.
 /**
  * @param {string} filePath Path to file.
  */
@@ -109,7 +107,6 @@ function checkOutputFile(filePath) {
   });
 }
 
-// ToDo add new line between modules.
 /**
  * @param {string} data file data.
  * @return {string} return data without imports and exports.
