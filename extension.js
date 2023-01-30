@@ -55,11 +55,9 @@ function getFilesNamesFromeFolder(folderURL, exclusionFilePath) {
  * @param {string} srcPath Path to file.
  * @param {Function} callback Return file data.
  */
-function getFileContent(srcPath, callback) {
-  fs.readFile(srcPath, 'utf8', (err, data) => {
-    if (err) handleError(err);
-    callback(data);
-  });
+async function getFileContent(srcPath, callback) {
+  const data = fs.readFileSync(srcPath, 'utf8');
+  callback(data);
 }
 
 // ToDo add new line between modules.
@@ -67,12 +65,12 @@ function getFileContent(srcPath, callback) {
  * @param {string} savPath Output file path to write.
  * @param {string} srcPath Path to data reading.
  */
-function copyFileContent(savPath, srcPath) {
-  getFileContent(srcPath, (data) => {
+async function copyFileContent(savPath, srcPath) {
+  await getFileContent(srcPath, (data) => {
     // remove import and export
     data = removeImportExport(data);
 
-    fs.appendFile(savPath, data, (err) => {
+    fs.appendFileSync(savPath, data, (err) => {
       if (err) handleError(err);
     });
   });
@@ -92,7 +90,7 @@ function checkOutputFolder(folderPath) {
  */
 function checkOutputFile(filePath) {
   if (fs.existsSync(filePath)) {
-    fs.unlink(filePath, (err) => {
+    fs.unlinkSync(filePath, (err) => {
       if (err) handleError(err);
     });
   }
@@ -138,8 +136,6 @@ function removeImportExport(data) {
   return newData;
 }
 
-// ToDo copy output file to clipboard.
-// Opens the file before all modules are written.
 /**
  * @param {string} filePath Path to file.
  */
@@ -185,7 +181,7 @@ async function activate(context) {
 
     let files = getFilesNamesFromeFolder(rootFolderPath, outputFilePath);
 
-    copyFileContent(outputFilePath, indexFile.path);
+    await copyFileContent(outputFilePath, indexFile.path);
 
     files = files.filter((f) => {
       return f.path !== indexFile.path && f.name !== indexFile.name;
@@ -195,9 +191,8 @@ async function activate(context) {
       copyFileContent(outputFilePath, file.path);
     });
 
-    copyOutputFileToClipboard(outputFilePath);
-
     vscode.window.showInformationMessage('Compile Frontol project completed');
+    copyOutputFileToClipboard(outputFilePath);
   });
 
   context.subscriptions.push(disposable);
