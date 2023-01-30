@@ -129,9 +129,11 @@ function removeImportExport(data) {
     // remove all exports.
     newData = newData.replace(exportRegexp, '');
     newData = newData.replace(exportDefaultRegexp, '');
-  }
 
-  newData = newData.trim();
+    // Delte whirespaces and set new line
+    newData = newData.trim();
+    newData += '\r\n\r\n';
+  }
 
   return newData;
 }
