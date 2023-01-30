@@ -5,157 +5,200 @@ const fs = require('fs');
  * @param {vscode.ExtensionContext} context
  */
 
-// ToDo add recursively getting files
-function getFilesNamesFromeFolder(folderURL){
-
-	const files = [];
-
-	fs.readdirSync(folderURL).forEach(file => {
-		if(path.extname(file).toLowerCase() === ".txt" || path.extname(file).toLowerCase() === ".js"){
-			const filePath = `${folderURL}\\${file}`;
-
-			const fileInfo = {
-				name: file,
-				path: filePath
-			};
-
-			files.push(fileInfo);
-		}
-	  });
-
-	return files;
+/**
+ * Logging and throw error.
+ * @param {Error} err The error message.
+ */
+function handleError(err) {
+  console.log(err);
+  throw err;
 }
 
-function getFileContent(srcPath, callback) { 
-    fs.readFile(srcPath, 'utf8', function (err, data) {
-        if (err) handleError(err);
-        callback(data);
-        }
-    );
+// ToDo add recursively getting files.
+/**
+ * Adds two numbers together.
+ * @param {string} folderURL URL forlder.
+ * @return {Array<object>} Return Array of objects with file name and path.
+ */
+function getFilesNamesFromeFolder(folderURL) {
+  const files = [];
+
+  fs.readdirSync(folderURL).forEach((file) => {
+    if (path.extname(file).toLowerCase() === '.txt' ||
+        path.extname(file).toLowerCase() === '.js') {
+      const filePath = `${folderURL}\\${file}`;
+
+      const fileInfo = {
+        name: file,
+        path: filePath,
+      };
+
+      files.push(fileInfo);
+    }
+  });
+
+  return files;
 }
 
-// ToDo add new line between modules
-function copyFileContent(savPath, srcPath) { 
-    getFileContent(srcPath, function(data) {
-		// remove import and export
-		data = removeImportExport(data);
+/**
+ * @param {string} srcPath Path to file.
+ * @param {Function} callback Return file data.
+ */
+function getFileContent(srcPath, callback) {
+  fs.readFile(srcPath, 'utf8', (err, data) => {
+    if (err) handleError(err);
+    callback(data);
+  });
+}
 
-        fs.appendFile (savPath, data, function(err) {
-            if (err) handleError(err);
-        });
+// ToDo add new line between modules.
+/**
+ * @param {string} savPath Output file path to write.
+ * @param {string} srcPath Path to data reading.
+ */
+function copyFileContent(savPath, srcPath) {
+  getFileContent(srcPath, (data) => {
+    // remove import and export
+    data = removeImportExport(data);
+
+    fs.appendFile(savPath, data, (err) => {
+      if (err) handleError(err);
     });
+  });
 }
 
-function checkOutputFolder(folderPath){
-	if (!fs.existsSync(folderPath)){
-		fs.mkdirSync(folderPath);
-	}
+// ToDo add new line between modules.
+/**
+ * @param {string} folderPath Path to folder.
+ */
+function checkOutputFolder(folderPath) {
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath);
+  }
 }
 
-function checkOutputFile(filePath){
-	if(fs.existsSync(filePath)){
-		fs.unlink(filePath,function(err){
-			if (err) handleError(err);
-	   });  
-	}
+// ToDo add new line between modules.
+/**
+ * @param {string} filePath Path to file.
+ */
+function checkOutputFile(filePath) {
+  if (fs.existsSync(filePath)) {
+    fs.unlink(filePath, (err) => {
+      if (err) handleError(err);
+    });
+  }
 
-	// Create outputFile
-	fs.open(filePath, "wx", function (err, fd) {
-		if (err) handleError(err);
+  // Create outputFile.
+  fs.open(filePath, 'wx', (err, fd) => {
+    if (err) handleError(err);
 
-		fs.close(fd, function (err) {
-			if (err) handleError(err);
-		});
-	});
+    fs.close(fd, (err) => {
+      if (err) handleError(err);
+    });
+  });
 }
 
-function handleError(err){
-	console.log(err);
-	throw err;
-}
-// Remove import and export from file data
-function removeImportExport(data){
-	let newData = data;
-	const importRegexp = /import\s*{.*}\s*from\s*["'`].*["'`];?/mi
-	//const importAllRegexp = /import\s*.*\s*from\s*["'`].*["'`];?/mi
-	//const importAllAsRegexp = /import\s*.\s*as\s\w*\sfrom\s["'`]\w*["'`];?/mi
-	const exportRegexp = /export\s*{.*}\s*;?/mi
-	const exportDefaultRegexp = /export default \s*\w*;?/mi
+// ToDo add new line between modules.
+/**
+ * @param {string} data file data.
+ * @return {string} return data without imports and exports.
+ */
+function removeImportExport(data) {
+  let newData = data;
+  const importRegexp = /import\s*{.*}\s*from\s*["'`].*["'`];?/mi;
+  // const importAllRegexp = /import\s*.*\s*from\s*["'`].*["'`];?/mi
+  // const importAllAsRegexp = /import\s*.\s*as\s\w*\sfrom\s["'`]\w*["'`];?/mi
+  const exportRegexp = /export\s*{.*}\s*;?/mi;
+  const exportDefaultRegexp = /export default \s*\w*;?/mi;
 
-	// remove while exist importRegexp and exportRegexp in data
-	while(importRegexp.test(newData) || exportRegexp.test(newData) || exportDefaultRegexp.test(newData)){
+  // remove while exist importRegexp and exportRegexp in data.
+  while (importRegexp.test(newData) ||
+        exportRegexp.test(newData) ||
+        exportDefaultRegexp.test(newData)) {
+    // remove all imports.
+    newData = newData.replace(importRegexp, '');
+    // newData = newData.replace(importAllRegexp, "");
+    // newData = newData.readFile(importAllAsRegexp);
 
-		// remove all imports
-		newData = newData.replace(importRegexp, "");
-		//newData = newData.replace(importAllRegexp, "");
-		//newData = newData.readFile(importAllAsRegexp);
+    // remove all exports.
+    newData = newData.replace(exportRegexp, '');
+    newData = newData.replace(exportDefaultRegexp, '');
+  }
 
-		// remove all exports
-		newData = newData.replace(exportRegexp, "");
-		newData = newData.replace(exportDefaultRegexp, "");
-	}
+  newData = newData.trim();
 
-	newData = newData.trim();
-
-	return newData;
-}
-
-//ToDo copy output file to clipboard || Opens the file before all modules are written
-function copyOutputFileToClipboard(filePath){
-	getFileContent(filePath, (data) => {
-		vscode.env.clipboard.writeText(data || "There is no data to copy them");
-		vscode.window.showInformationMessage("Output file copied to clipboard");
-	});
+  return newData;
 }
 
+// ToDo copy output file to clipboard.
+// Opens the file before all modules are written.
+/**
+ * @param {string} filePath Path to file.
+ */
+function copyOutputFileToClipboard(filePath) {
+  getFileContent(filePath, (data) => {
+    vscode.env.clipboard.writeText(data || 'There is no data to copy them');
+    vscode.window.showInformationMessage('Output file copied to clipboard');
+  });
+}
+
+/**
+ * @param {context} context context VS Code.
+ */
 async function activate(context) {
+  // eslint-disable-next-line max-len
+  const disposable = vscode.commands.registerCommand('frontol-ext.compile', async () => {
+    vscode.window.showInformationMessage('Compile Frontol project started');
 
-	let disposable = vscode.commands.registerCommand('frontol-ext.compile', async () =>  {
+    const foldersNames = vscode.workspace.workspaceFolders;
 
-		vscode.window.showInformationMessage("Compile Frontol project started");
+    if (foldersNames === undefined) {
+      vscode.window.showInformationMessage('Please open project folder');
+      return;
+    }
+    if (foldersNames.length > 1) {
+      vscode.window.showInformationMessage('Please open project root folder');
+      return;
+    }
 
-		const foldersNames = vscode.workspace.workspaceFolders;
+    const rootFolderPath = foldersNames[0].uri.fsPath;
+    let files = getFilesNamesFromeFolder(rootFolderPath);
 
-		if(foldersNames === undefined){
-			vscode.window.showInformationMessage("Please open project folder");
-			return;
-		}
-		if(foldersNames.length > 1){
-			vscode.window.showInformationMessage("Please open project root folder");
-			return;
-		}
+    // Find root Index.js file.
+    const indexFile = files.filter((file) => {
+      return (file.name === 'Index.js') &&
+        (file.path === `${rootFolderPath}\\Index.js`);
+    })[0];
+    const outputFolderPath = `${rootFolderPath}\\output`;
+    const outputFilePath = `${rootFolderPath}\\output\\output.js`;
 
-		const rootFolderPath = foldersNames[0].uri.fsPath;
-		let files = getFilesNamesFromeFolder(rootFolderPath);
+    checkOutputFolder(outputFolderPath);
+    checkOutputFile(outputFilePath);
 
-		// Find root Index.js file
-		const indexFile = files.filter((file) => (file.name === "Index.js") && (file.path === `${rootFolderPath}\\Index.js`))[0];
-		const outputFolderPath = `${rootFolderPath}\\output`;
-		const outputFilePath = `${rootFolderPath}\\output\\output.js`;
+    copyFileContent(outputFilePath, indexFile.path);
 
-		checkOutputFolder(outputFolderPath);
-		checkOutputFile(outputFilePath);
+    files = files.filter((f) => {
+      return f.path !== indexFile.path && f.name !== indexFile.name;
+    });
 
-		copyFileContent(outputFilePath, indexFile.path);
+    files.forEach((file) => {
+      copyFileContent(outputFilePath, file.path);
+    });
 
-		files = files.filter(f => f.path !== indexFile.path && f.name !== indexFile.name)
+    copyOutputFileToClipboard(outputFilePath);
 
-		files.forEach((file)  => {
-			copyFileContent(outputFilePath, file.path);
-		});
+    vscode.window.showInformationMessage('Compile Frontol project completed');
+  });
 
-		copyOutputFileToClipboard(outputFilePath);
-		
-		vscode.window.showInformationMessage("Compile Frontol project completed");
-	});
-
-	context.subscriptions.push(disposable);
+  context.subscriptions.push(disposable);
 }
 
-// This method is called when your extension is deactivated
-function deactivate() {}
+/**
+ * This method is called when your extension is deactivated.
+ */
+function deactivate() { }
 
 module.exports = {
-	activate,
-	deactivate
-}
+  activate,
+  deactivate,
+};
